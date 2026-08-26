@@ -5,14 +5,15 @@ Homebrew tap for [GSD Pi](https://github.com/open-gsd/gsd-pi) - a local-first co
 ## Installation
 
 ```bash
-brew tap raymondcoetzee/gsd-pi
+brew tap coetzeer/gsd-pi
+brew trust coetzeer/gsd-pi
 brew install gsd-pi
 ```
 
 Or in one line:
 
 ```bash
-brew install raymondcoetzee/gsd-pi/gsd-pi
+brew install coetzeer/gsd-pi/gsd-pi
 ```
 
 ## Updating
