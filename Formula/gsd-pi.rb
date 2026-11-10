@@ -1,8 +1,8 @@
 class GsdPi < Formula
   desc "Local-first coding agent for planning and implementing project work"
   homepage "https://github.com/open-gsd/gsd-pi"
-  url "https://registry.npmjs.org/@opengsd/gsd-pi/-/gsd-pi-1.22.0.tgz"
-  sha256 "eec58d51a3579d5e3e1bdcdd856733c9d0fcc355c97667b93ad154172a8a0ddb"
+  url "https://registry.npmjs.org/@opengsd/gsd-pi/-/gsd-pi-1.23.0.tgz"
+  sha256 "996535f180943af6e44be93ceb7b5dc7187c3dbfe434afa9f1d0255670884bb3"
   license "MIT"
 
   livecheck do
