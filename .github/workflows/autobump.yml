@@ -2,6 +2,7 @@
 name: brew bump
 
 on:
+  workflow_dispatch:
   push:
     branches:
       - main
@@ -26,15 +27,37 @@ jobs:
     steps:
       - name: Set up Homebrew
         id: set-up-homebrew
-        uses: Homebrew/actions/setup-homebrew@eb02c69dbabdb66ff183c614f4ce7ab3c077592c # 2026.10.12.1
+        uses: Homebrew/actions/setup-homebrew@4790763c0a3ba4036f72634dc079c4a7dfcd4878 # 2026.10.19.1
 
       - name: Set up git
         id: git_setup
-        uses: Homebrew/actions/git-user-config@eb02c69dbabdb66ff183c614f4ce7ab3c077592c # 2026.10.12.1
+        uses: Homebrew/actions/git-user-config@4790763c0a3ba4036f72634dc079c4a7dfcd4878 # 2026.10.19.1
 
+      # `brew bump --open-pr` pushes its branch before creating the PR. If the
+      # PR API call fails, a retry would otherwise fail on that orphan branch.
+      - name: Remove orphaned bump branches
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          while read -r ref; do
+            branch="${ref#refs/heads/}"
+            [[ -n "$branch" ]] || continue
+
+            pr_count="$(gh pr list --repo "$GITHUB_REPOSITORY" --head "$branch" \
+              --state all --json number --limit 1 --jq 'length')"
+            if [[ "$pr_count" == "0" ]]; then
+              gh api --method DELETE "repos/$GITHUB_REPOSITORY/git/refs/heads/$branch"
+            fi
+          done < <(gh api --paginate \
+            "repos/$GITHUB_REPOSITORY/git/matching-refs/heads/bump-" --jq '.[].ref')
+
+      # gsd-pi is published to npm, so livecheck resolves new versions
+      # through the registry and `brew bump` can update the formula directly.
+      # The bump uses BREW_PAT so the pull request it opens triggers tests.yml
+      # (pull requests created with GITHUB_TOKEN do not start new runs).
       - name: Bump formulae
         env:
-          HOMEBREW_GITHUB_API_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          HOMEBREW_GITHUB_API_TOKEN: ${{ secrets.BREW_PAT }}
           HOMEBREW_GIT_COMMITTER_NAME: ${{ steps.git_setup.outputs.name }}
           HOMEBREW_GIT_COMMITTER_EMAIL: ${{ steps.git_setup.outputs.email }}
           TAP_NAME: ${{ steps.set-up-homebrew.outputs.tap-name }}
