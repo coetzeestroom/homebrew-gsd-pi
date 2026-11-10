@@ -11,6 +11,8 @@ class GsdPi < Formula
   end
 
   depends_on "node"
+  # The arm64-darwin ripgrep bundled with claude-agent-sdk links Homebrew's pcre2.
+  depends_on "pcre2" if OS.mac? && Hardware::CPU.arm?
 
   def install
     system "npm", "install", *std_npm_args
@@ -53,9 +55,18 @@ class GsdPi < Formula
     end
 
     # @anthropic-ai/claude-agent-sdk: vendor/<tool>/<arch>-<os>
+    sdk_vendor = "#{libexec}/**/@anthropic-ai/claude-agent-sdk/vendor"
     sdk_arch = "#{arch}-#{os}"
-    Dir.glob("#{libexec}/**/@anthropic-ai/claude-agent-sdk/vendor/*/*").each do |dir|
+    Dir.glob("#{sdk_vendor}/*/*").each do |dir|
       rm_r(dir) if File.directory?(dir) && File.basename(dir) != sdk_arch
+    end
+
+    # The SDK's tree-sitter-bash and audio-capture macOS builds are dylibs whose
+    # install name points at the upstream build machine. Their Mach-O headers
+    # have no room for Homebrew's prefix, so relocation fails. The SDK falls
+    # back gracefully without them (legacy shell parsing and no native audio).
+    if OS.mac?
+      Dir.glob("#{sdk_vendor}/{tree-sitter-bash,audio-capture}").each { |dir| rm_r(dir) }
     end
   end
 end
